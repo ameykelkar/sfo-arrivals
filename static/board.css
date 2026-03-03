@@ -1,0 +1,108 @@
+/* ── Page background ──────────────────────────────────── */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+  background-color: #0b0c10 !important;
+}
+[data-testid="stSidebar"] { background: #0b0c10 !important; }
+#MainMenu, footer, [data-testid="stToolbar"] { visibility: hidden; }
+
+/* ── Board container ──────────────────────────────────── */
+.board-wrap {
+  background: #0b0c10;
+  border: 1px solid #1e2230;
+  border-radius: 6px;
+  padding: 0 0 12px 0;
+  overflow-x: auto;
+}
+.board-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #111520;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1e2230;
+  margin-bottom: 4px;
+}
+.board-header h2 {
+  margin: 0;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #ffffff;
+  text-transform: uppercase;
+}
+.board-header .count {
+  margin-left: auto;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c8d4f0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.board-header .updated-at {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #7a88aa;
+  letter-spacing: 1.5px;
+  margin-left: 20px;
+  text-transform: uppercase;
+}
+
+/* ── Live badge ───────────────────────────────────────── */
+.live-text {
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #3dffa0;
+  animation: blink 1.4s ease-in-out infinite;
+}
+@keyframes blink { 0%,100% { opacity:1 } 50% { opacity:.2 } }
+
+/* ── Table ────────────────────────────────────────────── */
+.flt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+.flt-table thead tr { background: #111520; }
+.flt-table th {
+  text-align: left;
+  padding: 12px 18px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  color: #8a9abf;
+  text-transform: uppercase;
+  border-bottom: 2px solid #1e2535;
+  white-space: nowrap;
+}
+.flt-table td {
+  padding: 13px 18px;
+  font-size: 1.05rem;
+  color: #c8d0e8;
+  border-bottom: 1px solid #13151f;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.flt-table tbody tr:hover td { background: #12151f; }
+
+/* ── Airline cell ─────────────────────────────────────── */
+.col-airline {
+  font-weight: 600;
+  color: #e8ecfa !important;
+}
+
+/* ── Status badges ────────────────────────────────────── */
+.status-ontime    { color: #3dffa0; font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; }
+.status-scheduled { color: #f5a623; font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; }
+.status-delayed   { color: #e63946; font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; }
+.status-cancelled { color: #888;    font-weight: 700; font-size: 0.9rem; letter-spacing: 1px; text-decoration: line-through; }
+
+/* ── ETA countdown ────────────────────────────────────── */
+.eta-countdown {
+  font-size: 0.8rem;
+  color: #5a6080;
+  letter-spacing: 0.5px;
+}

@@ -1,0 +1,18 @@
+# Environment — never commit the API key
+.env
+
+# Cached data — regenerated at runtime
+data/logos/
+data/airlines.dat
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Streamlit
+.streamlit/secrets.toml

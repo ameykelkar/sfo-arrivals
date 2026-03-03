@@ -102,7 +102,18 @@ def render_board(flights: list[dict], updated_at: str = "") -> str:
     css = _CSS_PATH.read_text(encoding="utf-8")
 
     header_cells = "".join(f"<th>{label}</th>" for _, label in COLUMNS)
-    rows = _build_rows(flights)
+
+    if flights:
+        tbody = f"<tbody>{_build_rows(flights)}</tbody>"
+        flight_count = f"{len(flights)} FLIGHTS"
+    else:
+        col_span = len(COLUMNS)
+        tbody = (
+            f'<tbody><tr><td colspan="{col_span}" class="no-arrivals">'
+            "No upcoming arrivals"
+            f"</td></tr></tbody>"
+        )
+        flight_count = "0 FLIGHTS"
 
     return f"""
 <style>{css}</style>
@@ -110,13 +121,13 @@ def render_board(flights: list[dict], updated_at: str = "") -> str:
   <div class="board-header">
     <h2>SFO &mdash; Arrivals</h2>
     <span class="count">
-      <span class="live-text">LIVE</span> &nbsp;&middot;&nbsp; {len(flights)} FLIGHTS
+      <span class="live-text">LIVE</span> &nbsp;&middot;&nbsp; {flight_count}
     </span>
     <span class="updated-at">UPDATED {updated_at}</span>
   </div>
   <table class="flt-table">
     <thead><tr>{header_cells}</tr></thead>
-    <tbody>{rows}</tbody>
+    {tbody}
   </table>
 </div>
 """

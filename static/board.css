@@ -106,3 +106,13 @@
   color: #5a6080;
   letter-spacing: 0.5px;
 }
+
+/* ── Empty state ──────────────────────────────────────── */
+.no-arrivals {
+  text-align: center;
+  padding: 40px 18px;
+  font-size: 0.9rem;
+  color: #2e3450;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}

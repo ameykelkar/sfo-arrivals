@@ -25,14 +25,6 @@ def main() -> None:
     with st.spinner(""):
         flights = _fetch()
 
-    if not flights:
-        st.markdown(
-            '<p style="color:#556;font-family:monospace;padding:20px;">'
-            "NO ARRIVALS FOUND — CHECK AEROAPI_API_KEY</p>",
-            unsafe_allow_html=True,
-        )
-        return
-
     updated_at = dt.datetime.now(_PACIFIC).strftime("%I:%M:%S %p")
     st.markdown(render_board(flights, updated_at), unsafe_allow_html=True)
 

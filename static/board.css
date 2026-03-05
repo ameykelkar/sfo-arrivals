@@ -62,6 +62,32 @@
   text-transform: uppercase;
 }
 
+/* ── Fullscreen button ────────────────────────────────── */
+.fs-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid #3a4060;
+  border-radius: 6px;
+  color: #c8d4f0;
+  cursor: pointer;
+  padding: 6px 8px;
+  line-height: 0;
+  transition: background 0.2s, border-color 0.2s;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+.fs-btn:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: #c8d4f0;
+}
+.fs-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+.fs-btn .icon-compress { display: none; }
+:fullscreen .fs-btn .icon-expand   { display: none; }
+:fullscreen .fs-btn .icon-compress { display: block; }
+
 /* ── Live badge ───────────────────────────────────────── */
 .live-text {
   font-size: 0.85rem;

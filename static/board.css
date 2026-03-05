@@ -5,6 +5,19 @@
 [data-testid="stSidebar"] { background: #0b0c10 !important; }
 #MainMenu, footer, [data-testid="stToolbar"] { visibility: hidden; }
 
+/* Remove Streamlit default page padding */
+.block-container {
+  padding-top: 1rem !important;
+  padding-bottom: 0 !important;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
+}
+/* Also collapse the hidden header bar height */
+[data-testid="stHeader"] {
+  height: 0 !important;
+  min-height: 0 !important;
+}
+
 /* ── Board container ──────────────────────────────────── */
 .board-wrap {
   background: #0b0c10;
@@ -115,4 +128,53 @@
   color: #2e3450;
   letter-spacing: 2px;
   text-transform: uppercase;
+}
+
+/* ── Mobile landscape (≤ 900px wide) ─────────────────── */
+@media (max-width: 900px) {
+  .board-header {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .board-header h2 {
+    font-size: 1rem;
+    letter-spacing: 3px;
+  }
+  .board-header .count {
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+  }
+  .board-header .updated-at {
+    display: none; /* hide timestamp — saves space */
+  }
+
+  .flt-table th {
+    padding: 8px 10px;
+    font-size: 0.6rem;
+    letter-spacing: 1.5px;
+  }
+  .flt-table td {
+    padding: 9px 10px;
+    font-size: 0.88rem;
+  }
+
+  /* Shrink logos */
+  .col-airline img,
+  .col-airline svg {
+    height: 20px !important;
+    width: 20px !important;
+    margin-right: 7px !important;
+  }
+
+  /* Status badges */
+  .status-ontime, .status-scheduled,
+  .status-delayed, .status-cancelled {
+    font-size: 0.75rem;
+  }
+
+  /* Hide Distance column (6th) — least useful on small screens */
+  .flt-table th:nth-child(6),
+  .flt-table td:nth-child(6) {
+    display: none;
+  }
 }

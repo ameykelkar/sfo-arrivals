@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 import html
+import math
 from pathlib import Path
 
 _CSS_PATH = Path(__file__).resolve().parent / "static" / "board.css"
@@ -72,8 +73,11 @@ def _arrival_cell(flight: dict) -> str:
     if utc_str:
         try:
             arr = dt.datetime.fromisoformat(utc_str)
-            mins = int((arr - dt.datetime.now(dt.timezone.utc)).total_seconds() / 60)
-            if mins > 0:
+            secs = (arr - dt.datetime.now(dt.timezone.utc)).total_seconds()
+            if secs <= 60:
+                countdown = '<br><span class="eta-countdown">arriving</span>'
+            else:
+                mins = math.ceil(secs / 60)
                 countdown = f'<br><span class="eta-countdown">in {mins} min</span>'
         except Exception:  # noqa: BLE001
             pass

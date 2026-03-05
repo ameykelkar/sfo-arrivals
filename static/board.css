@@ -8,7 +8,9 @@ footer,
 [data-testid="stToolbar"],
 [data-testid="stStatusWidget"],
 [data-testid="stDecoration"],
-[data-testid="stBottom"] {
+[data-testid="stBottom"],
+[class*="viewerBadge"],
+[class*="profileContainer"] {
   display: none !important;
 }
 

@@ -15,21 +15,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Hide Streamlit Cloud branding injected outside the component tree
 st.markdown(
-    """
-    <style>
-    /* Streamlit Cloud viewer badge (logo link) */
-    a[href*="streamlit.io/cloud"],
-    a[href*="streamlit.io/cloud"] *,
-    [class*="viewerBadge"],
-    [class*="viewerBadge"] * { display: none !important; }
-
-    /* Streamlit Cloud profile avatar */
-    [class*="profileContainer"],
-    [class*="profileContainer"] * { display: none !important; }
-    </style>
-    """,
+    "<style>#MainMenu {visibility: hidden;} footer {visibility: hidden;}</style>",
     unsafe_allow_html=True,
 )
 

@@ -3,16 +3,6 @@
   background-color: #0b0c10 !important;
 }
 [data-testid="stSidebar"] { background: #0b0c10 !important; }
-#MainMenu,
-footer,
-[data-testid="stToolbar"],
-[data-testid="stStatusWidget"],
-[data-testid="stDecoration"],
-[data-testid="stBottom"],
-[class*="viewerBadge"],
-[class*="profileContainer"] {
-  display: none !important;
-}
 
 /* Remove Streamlit default page padding */
 .block-container {

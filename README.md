@@ -21,9 +21,11 @@ Add your real key to `.env.local`, then open `http://localhost:3000`.
 1. Import this repository into Vercel.
 2. Keep the detected framework preset as **Next.js**.
 3. Add `AEROAPI_API_KEY` in the project's Environment Variables settings.
-4. Optionally add `API_CACHE_TTL_SECONDS`. It defaults to `300` seconds and
+4. Add `LOGOSTREAM_API_KEY` for airline tail-fin images. The free Logostream
+   plan is sufficient for small deployments, but does not permit caching.
+5. Optionally add `API_CACHE_TTL_SECONDS`. It defaults to `300` seconds and
    values below that use the same five-minute minimum.
-5. Deploy.
+6. Deploy.
 
 The API key is read only by the server route and is never sent to the browser.
 The `/api/flights` response is cached at Vercel's CDN for the configured TTL so
@@ -54,5 +56,5 @@ npm start      # run the production build locally
 - `app/components/arrivals-board.js` loads and displays live arrivals.
 - `app/api/flights/route.js` is the server-only Vercel/Next.js API route.
 - `lib/flightaware.js` fetches and normalizes AeroAPI data.
-- `lib/airlines.js` resolves airline codes, and `lib/airports.js` adds origin countries; both use built-in fallbacks.
+- `lib/airlines.js`, `lib/airports.js`, and `lib/aircraft.js` resolve display names with built-in fallbacks.
 - `app/globals.css` contains deliberately neutral, framework-independent styles.

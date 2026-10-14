@@ -292,12 +292,12 @@ td {
   white-space: nowrap;
 }
 
-th:nth-child(1) { width: 23%; }
-th:nth-child(2) { width: 11%; }
-th:nth-child(3) { width: 27%; }
-th:nth-child(4) { width: 15%; }
-th:nth-child(5) { width: 14%; }
-th:nth-child(6) { width: 10%; }
+th:nth-child(1) { width: 21%; }
+th:nth-child(2) { width: 19%; }
+th:nth-child(3) { width: 24%; }
+th:nth-child(4) { width: 14%; }
+th:nth-child(5) { width: 13%; }
+th:nth-child(6) { width: 9%; }
 
 tbody tr:last-child td {
   border-bottom: 0;
@@ -335,6 +335,12 @@ tbody tr:hover:not(.loading-row) {
   border-radius: 5px;
 }
 
+.airline-tail {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
 .logo-fallback {
   display: grid;
   place-items: center;
@@ -354,6 +360,17 @@ tbody tr:hover:not(.loading-row) {
 
 .origin-cell {
   color: #e1e6ec;
+}
+
+.aircraft-cell {
+  display: block;
+  margin-top: 5px;
+  overflow: hidden;
+  color: #bdc7d2;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.76em;
+  font-weight: 700;
+  text-overflow: ellipsis;
 }
 
 .status {
@@ -445,12 +462,16 @@ tbody tr:hover:not(.loading-row) {
     display: none;
   }
 
-  th:nth-child(1) { width: 22%; }
-  th:nth-child(2) { width: 13%; }
-  th:nth-child(3) { width: 27%; }
+  th:nth-child(1) { width: 23%; }
+  th:nth-child(2) { width: 22%; }
+  th:nth-child(3) { width: 25%; }
   th:nth-child(4) { width: 16%; }
   th:nth-child(5) { width: 14%; }
-  th:nth-child(6) { width: 8%; }
+
+  th:nth-child(6),
+  td:nth-child(6) {
+    display: none;
+  }
 }
 
 @media (max-width: 760px) {
@@ -595,6 +616,7 @@ tbody tr:hover:not(.loading-row) {
   }
 
   tbody tr:not(.loading-row) td:nth-child(6) {
+    display: block;
     grid-column: 2;
     grid-row: 3;
     text-align: right;

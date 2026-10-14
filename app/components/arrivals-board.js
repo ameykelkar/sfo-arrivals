@@ -66,16 +66,22 @@ function ArrivalsIcon() {
 
 function AirlineLogo({ airline, codes }) {
   const [index, setIndex] = useState(0);
+  const sources = [
+    ...(codes || []).map((code) => `/api/airline-tail/${encodeURIComponent(code)}`),
+    ...(codes || []).map(
+      (code) => `${LOGO_BASE_URL}/${encodeURIComponent(code)}.png`,
+    ),
+  ];
 
-  if (!codes?.[index]) return <PlaneIcon />;
+  if (!sources[index]) return <PlaneIcon />;
 
   return (
     <img
-      className="airline-logo"
-      src={`${LOGO_BASE_URL}/${encodeURIComponent(codes[index])}.png`}
+      className={index < (codes?.length || 0) ? "airline-logo airline-tail" : "airline-logo"}
+      src={sources[index]}
       alt=""
-      width="32"
-      height="32"
+      width="40"
+      height="40"
       onError={() => setIndex((current) => current + 1)}
       title={airline}
     />
@@ -204,7 +210,7 @@ export default function ArrivalsBoard() {
           <thead>
             <tr>
               <th>Airline</th>
-              <th>Flight</th>
+              <th>Flight / Aircraft</th>
               <th>Origin</th>
               <th>Status</th>
               <th>Arrives</th>
@@ -223,7 +229,10 @@ export default function ArrivalsBoard() {
                       <span>{flight.airline}</span>
                     </div>
                   </td>
-                  <td data-label="Flight" className="flight-number">{flight.callsign || "—"}</td>
+                  <td data-label="Flight / Aircraft" className="flight-aircraft-cell">
+                    <span className="flight-number">{flight.callsign || "—"}</span>
+                    <span className="aircraft-cell">{flight.aircraft || "—"}</span>
+                  </td>
                   <td data-label="Origin" className="origin-cell">{flight.origin || "—"}</td>
                   <td data-label="Status"><span className={statusClass(flight.status)}>{flight.status}</span></td>
                   <td data-label="Arrival">
@@ -236,7 +245,7 @@ export default function ArrivalsBoard() {
                       {arrivalCountdown(flight.estimatedArrivalUtc, now)}
                     </span>
                   </td>
-                  <td data-label="Distance" className="distance-cell">{flight.routeDistanceMi ? `${flight.routeDistanceMi} mi` : "—"}</td>
+                  <td data-label="Distance" className="distance-cell">{flight.routeDistanceKm ? `${flight.routeDistanceKm} km` : "—"}</td>
                 </tr>
               ))
             ) : (

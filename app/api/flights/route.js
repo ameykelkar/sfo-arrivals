@@ -15,7 +15,7 @@ function configuredCacheSeconds() {
 function responseHeaders(ttl) {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
-    "Vercel-CDN-Cache-Control": `public, s-maxage=${ttl}, stale-while-revalidate=60, stale-if-error=3600`,
+    "Vercel-CDN-Cache-Control": `public, s-maxage=${ttl}, stale-if-error=3600`,
   };
 }
 

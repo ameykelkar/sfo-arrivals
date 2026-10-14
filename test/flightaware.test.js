@@ -48,11 +48,13 @@ test("normalizes a FlightAware arrival", () => {
       operator_icao: "UAL",
       origin: { city: "Chicago", code_iata: "ORD" },
       status: "En Route",
+      aircraft_type: "B738",
       estimated_on: "2026-10-07T19:30:00Z",
       route_distance: 1846.2,
     },
     new Map([["UA", "United Airlines"]]),
     new Map([["ORD", "United States"]]),
+    new Map([["B738", "Boeing 737-800"]]),
   );
 
   assert.deepEqual(normalized, {
@@ -60,9 +62,29 @@ test("normalizes a FlightAware arrival", () => {
     airline: "United Airlines",
     callsign: "UA123",
     origin: "Chicago (ORD), United States",
+    aircraft: "Boeing 737-800",
     status: "En Route",
     estimatedArrivalUtc: "2026-10-07T19:30:00.000Z",
-    routeDistanceMi: 1847,
+    routeDistanceKm: 2971,
     logoCodes: ["UA", "UAL"],
   });
+});
+
+test("prefers a SkyWest marketing carrier for the tail image", () => {
+  const normalized = __testing.normalizeFlight(
+    {
+      fa_flight_id: "SKW5555-1",
+      ident_iata: "OO5555",
+      operator_iata: "OO",
+      operator_icao: "SKW",
+      codeshares_iata: ["UA5555"],
+      codeshares: ["UAL5555"],
+      origin: { city: "Fresno", code_iata: "FAT" },
+      status: "Scheduled",
+      scheduled_on: "2026-10-07T19:30:00Z",
+    },
+    new Map([["OO", "SkyWest Airlines"]]),
+  );
+
+  assert.deepEqual(normalized.logoCodes, ["UA", "UAL", "OO", "SKW"]);
 });

@@ -1,18 +1,20 @@
 # Environment — never commit the API key
 .env
+.env.local
+.env.*.local
 
-# Cached data — regenerated at runtime
-data/logos/
-data/airlines.dat
+# Next.js
+node_modules/
+.next/
+out/
+.vercel/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
 
-# Python
+# Local data and previous Python environment artifacts
+data/
 __pycache__/
 *.py[cod]
-*.pyo
 .venv/
-*.egg-info/
-dist/
-build/
-
-# Streamlit
-.streamlit/secrets.toml

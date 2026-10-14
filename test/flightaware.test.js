@@ -3,20 +3,17 @@ import test from "node:test";
 
 import { __testing } from "../lib/flightaware.js";
 
-test("formats an airport using city, IATA code, and country", () => {
-  assert.equal(
-    __testing.formatAirport(
-      { city: "Seattle", code_iata: "SEA" },
-      new Map([["SEA", "United States"]]),
-    ),
-    "Seattle (SEA), United States",
-  );
-});
-
-test("formats an airport when country data is unavailable", () => {
+test("formats an airport using city and IATA code", () => {
   assert.equal(
     __testing.formatAirport({ city: "Seattle", code_iata: "SEA" }),
     "Seattle (SEA)",
+  );
+});
+
+test("formats an airport when only its code is available", () => {
+  assert.equal(
+    __testing.formatAirport({ code_icao: "KSEA" }),
+    "KSEA",
   );
 });
 
@@ -53,7 +50,7 @@ test("normalizes a FlightAware arrival", () => {
       route_distance: 1846.2,
     },
     new Map([["UA", "United Airlines"]]),
-    new Map([["ORD", "United States"]]),
+    new Map([["ORD", "🇺🇸 United States"]]),
     new Map([["B738", "Boeing 737-800"]]),
   );
 
@@ -61,16 +58,25 @@ test("normalizes a FlightAware arrival", () => {
     id: "UAL123-1",
     airline: "United Airlines",
     callsign: "UA123",
-    origin: "Chicago (ORD), United States",
+    origin: "Chicago (ORD)",
+    originCountry: "🇺🇸 United States",
+    originScope: "domestic",
     aircraft: "Boeing 737-800",
     status: "En Route",
     estimatedArrivalUtc: "2026-10-07T19:30:00.000Z",
+    estimatedVisibleUtc: "2026-10-07T19:28:00.000Z",
     routeDistanceKm: 2971,
     logoCodes: ["UA", "UAL"],
   });
 });
 
-test("prefers a SkyWest marketing carrier for the tail image", () => {
+test("classifies domestic, international, and unknown origins", () => {
+  assert.equal(__testing.classifyOriginCountry("🇺🇸 United States"), "domestic");
+  assert.equal(__testing.classifyOriginCountry("🇬🇧 United Kingdom"), "international");
+  assert.equal(__testing.classifyOriginCountry(null), "unknown");
+});
+
+test("prefers a SkyWest marketing carrier name and tail image", () => {
   const normalized = __testing.normalizeFlight(
     {
       fa_flight_id: "SKW5555-1",
@@ -83,8 +89,12 @@ test("prefers a SkyWest marketing carrier for the tail image", () => {
       status: "Scheduled",
       scheduled_on: "2026-10-07T19:30:00Z",
     },
-    new Map([["OO", "SkyWest Airlines"]]),
+    new Map([
+      ["OO", "SkyWest Airlines"],
+      ["UA", "United Airlines"],
+    ]),
   );
 
+  assert.equal(normalized.airline, "United Airlines");
   assert.deepEqual(normalized.logoCodes, ["UA", "UAL", "OO", "SKW"]);
 });

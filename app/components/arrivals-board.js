@@ -1,10 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1_000;
+import {
+  flightDataUrl,
+  flightRefreshBucket,
+  millisecondsUntilNextFlightRefresh,
+} from "../../lib/refresh";
+import { flightStatusPresentation } from "../../lib/status";
+
 const LOGO_BASE_URL =
   "https://raw.githubusercontent.com/Jxck-S/airline-logos/main/flightaware_logos";
+const FLIGHT_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "domestic", label: "Domestic" },
+  { value: "international", label: "International" },
+];
 
 const timeFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
@@ -33,18 +44,11 @@ const dateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
 });
 
-function statusClass(status = "") {
-  const value = status.toLowerCase();
-  if (value.includes("on time") || value.includes("en route")) return "status status-good";
-  if (value.includes("delay") || value.includes("divert")) return "status status-warning";
-  if (value.includes("cancel")) return "status status-muted";
-  return "status";
-}
-
-function arrivalCountdown(value, now) {
+function visibilityCountdown(value, now) {
   if (!value) return null;
   const minutes = Math.ceil((new Date(value).getTime() - now) / 60_000);
-  if (minutes <= 1) return "Arriving";
+  if (minutes < -1) return "Passed window";
+  if (minutes <= 1) return "At window";
   return `In ${minutes} min`;
 }
 
@@ -54,6 +58,11 @@ function PlaneIcon() {
       ✈
     </span>
   );
+}
+
+function FlightStatus({ status }) {
+  const presentation = flightStatusPresentation(status);
+  return <span className={presentation.className}>{presentation.label}</span>;
 }
 
 function ArrivalsIcon() {
@@ -102,13 +111,20 @@ export default function ArrivalsBoard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
+  const [flightFilter, setFlightFilter] = useState("all");
   const [now, setNow] = useState(Date.now());
+  const lastRequestedBucket = useRef(null);
 
-  const loadFlights = useCallback(async ({ manual = false } = {}) => {
+  const loadFlights = useCallback(async ({ manual = false, scheduled = false } = {}) => {
+    const requestTime = Date.now();
+    const requestBucket = flightRefreshBucket(requestTime);
+    if (scheduled && lastRequestedBucket.current === requestBucket) return;
+
+    lastRequestedBucket.current = requestBucket;
     if (manual) setRefreshing(true);
 
     try {
-      const response = await fetch("/api/flights", {
+      const response = await fetch(flightDataUrl(requestTime), {
         headers: { Pragma: "no-cache" },
       });
       const payload = await response.json();
@@ -136,20 +152,37 @@ export default function ArrivalsBoard() {
   useEffect(() => {
     if (!autoRefreshEnabled) return undefined;
 
-    const refreshTimer = window.setInterval(loadFlights, AUTO_REFRESH_INTERVAL_MS);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") loadFlights();
+    let cancelled = false;
+    let refreshTimer;
+
+    const scheduleNextRefresh = () => {
+      refreshTimer = window.setTimeout(async () => {
+        await loadFlights({ scheduled: true });
+        if (!cancelled) scheduleNextRefresh();
+      }, millisecondsUntilNextFlightRefresh(Date.now()));
     };
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        loadFlights({ scheduled: true });
+      }
+    };
+
+    scheduleNextRefresh();
     document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
-      window.clearInterval(refreshTimer);
+      cancelled = true;
+      window.clearTimeout(refreshTimer);
       document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
   }, [autoRefreshEnabled, loadFlights]);
 
   const flights = data?.flights ?? [];
+  const filteredFlights = flightFilter === "all"
+    ? flights
+    : flights.filter((flight) => flight.originScope === flightFilter);
+  const filterDescription = flightFilter === "all" ? "" : `${flightFilter} `;
 
   return (
     <section className="board" aria-labelledby="board-title">
@@ -172,11 +205,24 @@ export default function ArrivalsBoard() {
       <div className="board-toolbar" aria-live="polite">
         <div className="board-summary">
           <span className="live-indicator"><i /> Live arrivals</span>
-          <span>{loading ? "Loading flights…" : `${flights.length} flights in the next 30 minutes`}</span>
+          <span>{loading ? "Loading flights…" : `${filteredFlights.length} ${filterDescription}flights in the next 30 minutes`}</span>
           {data?.updatedAt && <span>Updated {updatedFormatter.format(new Date(data.updatedAt))}</span>}
         </div>
 
         <div className="board-controls">
+          <div className="flight-filter" role="group" aria-label="Filter arrivals">
+            {FLIGHT_FILTERS.map((filter) => (
+              <button
+                type="button"
+                key={filter.value}
+                className={`filter-button ${flightFilter === filter.value ? "filter-button-active" : ""}`}
+                aria-pressed={flightFilter === filter.value}
+                onClick={() => setFlightFilter(filter.value)}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
           <button
             type="button"
             className={`control-button auto-refresh ${autoRefreshEnabled ? "auto-refresh-active" : ""}`}
@@ -213,15 +259,15 @@ export default function ArrivalsBoard() {
               <th>Flight / Aircraft</th>
               <th>Origin</th>
               <th>Status</th>
-              <th>Arrives</th>
+              <th title="Window time is estimated for the usual Runway 28 approach">Visible / Arrives</th>
               <th>Distance</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <LoadingRows />
-            ) : flights.length ? (
-              flights.map((flight) => (
+            ) : filteredFlights.length ? (
+              filteredFlights.map((flight) => (
                 <tr key={flight.id}>
                   <td data-label="Airline">
                     <div className="airline-cell">
@@ -233,16 +279,24 @@ export default function ArrivalsBoard() {
                     <span className="flight-number">{flight.callsign || "—"}</span>
                     <span className="aircraft-cell">{flight.aircraft || "—"}</span>
                   </td>
-                  <td data-label="Origin" className="origin-cell">{flight.origin || "—"}</td>
-                  <td data-label="Status"><span className={statusClass(flight.status)}>{flight.status}</span></td>
-                  <td data-label="Arrival">
-                    <span className="arrival-time">
-                      {flight.estimatedArrivalUtc
-                        ? timeFormatter.format(new Date(flight.estimatedArrivalUtc))
+                  <td data-label="Origin" className="origin-cell">
+                    <span>{flight.origin || "—"}</span>
+                    <span className="origin-country">{flight.originCountry || "—"}</span>
+                  </td>
+                  <td data-label="Status"><FlightStatus status={flight.status} /></td>
+                  <td data-label="Visible / Arrives">
+                    <span className="arrival-time visible-time">
+                      {flight.estimatedVisibleUtc
+                        ? `≈ ${timeFormatter.format(new Date(flight.estimatedVisibleUtc))}`
                         : "—"}
                     </span>
                     <span className="countdown">
-                      {arrivalCountdown(flight.estimatedArrivalUtc, now)}
+                      {[
+                        visibilityCountdown(flight.estimatedVisibleUtc, now),
+                        flight.estimatedArrivalUtc
+                          ? `Lands ${timeFormatter.format(new Date(flight.estimatedArrivalUtc))}`
+                          : null,
+                      ].filter(Boolean).join(" · ")}
                     </span>
                   </td>
                   <td data-label="Distance" className="distance-cell">{flight.routeDistanceKm ? `${flight.routeDistanceKm} km` : "—"}</td>
@@ -250,7 +304,7 @@ export default function ArrivalsBoard() {
               ))
             ) : (
               <tr>
-                <td className="empty-state" colSpan="6">No upcoming arrivals in the next 30 minutes.</td>
+                <td className="empty-state" colSpan="6">No upcoming {filterDescription}arrivals in the next 30 minutes.</td>
               </tr>
             )}
           </tbody>

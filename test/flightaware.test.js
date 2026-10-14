@@ -26,14 +26,14 @@ test("formats AeroAPI query times without milliseconds", () => {
 
 test("counts the paid calls remaining inside the safety limit", () => {
   assert.deepEqual(__testing.calculateBudgetStatus(0), {
-    remainingCalls: 850,
+    remainingCalls: 950,
   });
 
-  assert.deepEqual(__testing.calculateBudgetStatus(4.245), {
+  assert.deepEqual(__testing.calculateBudgetStatus(4.745), {
     remainingCalls: 1,
   });
 
-  assert.equal(__testing.calculateBudgetStatus(4.25).remainingCalls, 0);
+  assert.equal(__testing.calculateBudgetStatus(4.75).remainingCalls, 0);
 });
 
 test("normalizes a FlightAware arrival", () => {
@@ -64,6 +64,7 @@ test("normalizes a FlightAware arrival", () => {
     aircraft: "Boeing 737-800",
     status: "En Route",
     estimatedArrivalUtc: "2026-10-07T19:30:00.000Z",
+    actualArrivalUtc: null,
     estimatedVisibleUtc: "2026-10-07T19:28:00.000Z",
     routeDistanceKm: 2971,
     logoCodes: ["UA", "UAL"],

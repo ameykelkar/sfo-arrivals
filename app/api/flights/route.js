@@ -8,8 +8,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 function configuredCacheSeconds() {
-  const configured = Number.parseInt(process.env.API_CACHE_TTL_SECONDS ?? "300", 10);
-  return Number.isFinite(configured) && configured >= 300 ? configured : 300;
+  const configured = Number.parseInt(process.env.API_CACHE_TTL_SECONDS ?? "1800", 10);
+  return Number.isFinite(configured) && configured >= 1800 ? configured : 1800;
 }
 
 function responseHeaders(ttl) {

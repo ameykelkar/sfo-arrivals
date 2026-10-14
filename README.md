@@ -23,8 +23,8 @@ Add your real key to `.env.local`, then open `http://localhost:3000`.
 3. Add `AEROAPI_API_KEY` in the project's Environment Variables settings.
 4. Add `LOGOSTREAM_API_KEY` for airline tail-fin images. The free Logostream
    plan is sufficient for small deployments, but does not permit caching.
-5. Optionally add `API_CACHE_TTL_SECONDS`. It defaults to `300` seconds and
-   values below that use the same five-minute minimum.
+5. Optionally add `API_CACHE_TTL_SECONDS`. It defaults to `1800` seconds and
+   values below that use the same 30-minute minimum.
 6. Deploy.
 
 The API key is read only by the server route and is never sent to the browser.
@@ -33,13 +33,17 @@ multiple visitors do not cause one paid AeroAPI request each.
 
 ### FlightAware cost protection
 
-Auto-refresh is off by default. A visitor can enable five-minute polling for the
-current browser session; the setting resets when the page reloads or the tab is
-closed. Before making a paid arrivals request, the server checks FlightAware's
-free account-usage endpoint. It stops paid requests at $4.25 in a rolling 31-day
-window. The $0.75 reserve protects the $5 monthly credit from FlightAware's
-usage-reporting delay and concurrent requests. If usage cannot be verified, the
-app fails closed without making the paid request.
+Auto-refresh is off by default. A visitor can enable polling at :00 and :30
+from 8 AM to midnight Pacific for the current browser session; the setting
+resets when the page reloads or the tab is closed. Overnight automatic polling
+is paused; initial loads and manual refresh remain available. Flights disappear
+five minutes after actual landing when supplied, otherwise five minutes after
+the latest landing estimate. This happens locally without another API call.
+Before making a paid arrivals request, the server checks FlightAware's free
+account-usage endpoint. It stops paid requests at $4.75 in a rolling 31-day
+window. The $0.25 reserve provides a buffer for usage-reporting delay and
+concurrent requests, but is not a guaranteed billing cap. If usage cannot be
+verified, the app fails closed without making the paid request.
 
 ## Commands
 

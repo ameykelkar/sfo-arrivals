@@ -5,7 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   flightDataUrl,
   flightRefreshBucket,
+  isFlightRefreshActive,
   millisecondsUntilNextFlightRefresh,
+  shouldDisplayFlight,
 } from "../../lib/refresh";
 import { flightStatusPresentation } from "../../lib/status";
 
@@ -117,6 +119,7 @@ export default function ArrivalsBoard() {
 
   const loadFlights = useCallback(async ({ manual = false, scheduled = false } = {}) => {
     const requestTime = Date.now();
+    if (scheduled && !isFlightRefreshActive(requestTime)) return;
     const requestBucket = flightRefreshBucket(requestTime);
     if (scheduled && lastRequestedBucket.current === requestBucket) return;
 
@@ -178,7 +181,7 @@ export default function ArrivalsBoard() {
     };
   }, [autoRefreshEnabled, loadFlights]);
 
-  const flights = data?.flights ?? [];
+  const flights = (data?.flights ?? []).filter((flight) => shouldDisplayFlight(flight, now));
   const filteredFlights = flightFilter === "all"
     ? flights
     : flights.filter((flight) => flight.originScope === flightFilter);
@@ -227,10 +230,15 @@ export default function ArrivalsBoard() {
             type="button"
             className={`control-button auto-refresh ${autoRefreshEnabled ? "auto-refresh-active" : ""}`}
             aria-pressed={autoRefreshEnabled}
+            title="Every 30 minutes at :00 and :30, from 8 AM to midnight Pacific"
             onClick={() => setAutoRefreshEnabled((enabled) => !enabled)}
           >
-            <span>Auto refresh</span>
-            <span className="toggle-state">{autoRefreshEnabled ? "On" : "Off"}</span>
+            <svg className="auto-refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M20 7v5h-5M4 17v-5h5" />
+              <path d="M6.1 7a7 7 0 0 1 11.5-1L20 9M4 15l2.4 3A7 7 0 0 0 17.9 17" />
+            </svg>
+            <span>Auto 30m</span>
+            <span className="toggle-state">{autoRefreshEnabled ? (isFlightRefreshActive(now) ? "On" : "Paused") : "Off"}</span>
           </button>
           <button
             type="button"

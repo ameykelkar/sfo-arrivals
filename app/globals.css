@@ -277,6 +277,12 @@ h1 svg {
   line-height: 0;
 }
 
+.auto-refresh-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
 .spinning {
   animation: spin 800ms linear infinite;
 }
@@ -802,7 +808,7 @@ tbody tr:hover:not(.loading-row) {
   }
 
   .auto-refresh > span:first-child::after {
-    content: "Auto 5m";
+    content: "Auto 30m";
     font-size: 12px;
   }
 }

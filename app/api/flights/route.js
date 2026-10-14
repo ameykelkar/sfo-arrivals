@@ -1,16 +1,18 @@
-import { getIncomingFlights } from "../../../lib/flightaware";
+import {
+  AeroApiBudgetError,
+  getAeroApiBudgetStatus,
+  getIncomingFlights,
+} from "../../../lib/flightaware";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-function cacheSeconds() {
+function configuredCacheSeconds() {
   const configured = Number.parseInt(process.env.API_CACHE_TTL_SECONDS ?? "300", 10);
-  return Number.isFinite(configured) && configured >= 60 ? configured : 300;
+  return Number.isFinite(configured) && configured >= 300 ? configured : 300;
 }
 
-function responseHeaders() {
-  const ttl = cacheSeconds();
-
+function responseHeaders(ttl) {
   return {
     "Cache-Control": "public, max-age=0, must-revalidate",
     "Vercel-CDN-Cache-Control": `public, s-maxage=${ttl}, stale-while-revalidate=60, stale-if-error=3600`,
@@ -26,7 +28,9 @@ export async function GET() {
   }
 
   try {
+    await getAeroApiBudgetStatus();
     const flights = await getIncomingFlights();
+    const refreshAfterSeconds = configuredCacheSeconds();
 
     return Response.json(
       {
@@ -34,9 +38,16 @@ export async function GET() {
         flights,
         updatedAt: new Date().toISOString(),
       },
-      { headers: responseHeaders() },
+      { headers: responseHeaders(refreshAfterSeconds) },
     );
   } catch (error) {
+    if (error instanceof AeroApiBudgetError) {
+      return Response.json(
+        { error: error.message },
+        { status: 429, headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     console.error("Unable to load SFO arrivals", error);
 
     return Response.json(

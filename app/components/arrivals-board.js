@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-const REFRESH_INTERVAL_MS = 5 * 60 * 1_000;
+const AUTO_REFRESH_INTERVAL_MS = 5 * 60 * 1_000;
 const LOGO_BASE_URL =
   "https://raw.githubusercontent.com/Jxck-S/airline-logos/main/flightaware_logos";
 
@@ -12,11 +12,25 @@ const timeFormatter = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
+const currentTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  hour: "numeric",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
 const updatedFormatter = new Intl.DateTimeFormat("en-US", {
   timeZone: "America/Los_Angeles",
   hour: "numeric",
   minute: "2-digit",
   second: "2-digit",
+});
+
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Los_Angeles",
+  weekday: "short",
+  month: "short",
+  day: "numeric",
 });
 
 function statusClass(status = "") {
@@ -39,6 +53,14 @@ function PlaneIcon() {
     <span className="logo-fallback" aria-hidden="true">
       ✈
     </span>
+  );
+}
+
+function ArrivalsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m3.7 13.6 6.1 1.7 3.7 5.5 2.1-.6-1.6-5.5 4.5-1.3c1.8-.5 3-1.5 2.7-2.5-.3-1-1.9-1.2-3.7-.7L13 11.5 8.8 8l-1.5.4 2.4 4.4-4.3 1.3-2-1.5-1.1.3 1.4 2.7Z" />
+    </svg>
   );
 }
 
@@ -73,13 +95,16 @@ export default function ArrivalsBoard() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
   const [now, setNow] = useState(Date.now());
 
   const loadFlights = useCallback(async ({ manual = false } = {}) => {
     if (manual) setRefreshing(true);
 
     try {
-      const response = await fetch("/api/flights");
+      const response = await fetch("/api/flights", {
+        headers: { Pragma: "no-cache" },
+      });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Unable to load arrivals.");
       setData(payload);
@@ -94,33 +119,78 @@ export default function ArrivalsBoard() {
 
   useEffect(() => {
     loadFlights();
-    const refreshTimer = window.setInterval(loadFlights, REFRESH_INTERVAL_MS);
-    const clockTimer = window.setInterval(() => setNow(Date.now()), 30_000);
+  }, [loadFlights]);
+
+  useEffect(() => {
+    const clockTimer = window.setInterval(() => setNow(Date.now()), 1_000);
+
+    return () => window.clearInterval(clockTimer);
+  }, []);
+
+  useEffect(() => {
+    if (!autoRefreshEnabled) return undefined;
+
+    const refreshTimer = window.setInterval(loadFlights, AUTO_REFRESH_INTERVAL_MS);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") loadFlights();
+    };
+
+    document.addEventListener("visibilitychange", refreshWhenVisible);
 
     return () => {
       window.clearInterval(refreshTimer);
-      window.clearInterval(clockTimer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
     };
-  }, [loadFlights]);
+  }, [autoRefreshEnabled, loadFlights]);
 
   const flights = data?.flights ?? [];
 
   return (
     <section className="board" aria-labelledby="board-title">
       <header className="board-header">
-        <div>
-          <p className="eyebrow">San Francisco International Airport</p>
-          <h1 id="board-title">SFO Arrivals</h1>
+        <div className="board-identity">
+          <span className="airport-code" aria-hidden="true">SFO</span>
+          <div>
+            <p className="eyebrow">San Francisco International Airport</p>
+            <h1 id="board-title"><ArrivalsIcon /> Arrivals</h1>
+          </div>
         </div>
 
-        <div className="board-meta" aria-live="polite">
-          <span>{loading ? "Loading" : `${flights.length} flights`}</span>
-          {data?.updatedAt && <span>Updated {updatedFormatter.format(new Date(data.updatedAt))} PT</span>}
-          <button type="button" onClick={() => loadFlights({ manual: true })} disabled={refreshing}>
+        <div className="terminal-clock" aria-label="Current Pacific time">
+          <span>{dateFormatter.format(new Date(now))}</span>
+          <strong>{currentTimeFormatter.format(new Date(now))}</strong>
+          <small>Pacific time</small>
+        </div>
+      </header>
+
+      <div className="board-toolbar" aria-live="polite">
+        <div className="board-summary">
+          <span className="live-indicator"><i /> Live arrivals</span>
+          <span>{loading ? "Loading flights…" : `${flights.length} flights in the next 30 minutes`}</span>
+          {data?.updatedAt && <span>Updated {updatedFormatter.format(new Date(data.updatedAt))}</span>}
+        </div>
+
+        <div className="board-controls">
+          <button
+            type="button"
+            className={`control-button auto-refresh ${autoRefreshEnabled ? "auto-refresh-active" : ""}`}
+            aria-pressed={autoRefreshEnabled}
+            onClick={() => setAutoRefreshEnabled((enabled) => !enabled)}
+          >
+            <span>Auto refresh</span>
+            <span className="toggle-state">{autoRefreshEnabled ? "On" : "Off"}</span>
+          </button>
+          <button
+            type="button"
+            className="control-button refresh-button"
+            onClick={() => loadFlights({ manual: true })}
+            disabled={refreshing}
+          >
+            <span aria-hidden="true" className={refreshing ? "refresh-icon spinning" : "refresh-icon"}>↻</span>
             {refreshing ? "Refreshing…" : "Refresh"}
           </button>
         </div>
-      </header>
+      </div>
 
       {error && (
         <div className="error-message" role="alert">
@@ -147,16 +217,16 @@ export default function ArrivalsBoard() {
             ) : flights.length ? (
               flights.map((flight) => (
                 <tr key={flight.id}>
-                  <td>
+                  <td data-label="Airline">
                     <div className="airline-cell">
                       <AirlineLogo airline={flight.airline} codes={flight.logoCodes} />
                       <span>{flight.airline}</span>
                     </div>
                   </td>
-                  <td className="flight-number">{flight.callsign || "—"}</td>
-                  <td>{flight.origin || "—"}</td>
-                  <td><span className={statusClass(flight.status)}>{flight.status}</span></td>
-                  <td>
+                  <td data-label="Flight" className="flight-number">{flight.callsign || "—"}</td>
+                  <td data-label="Origin" className="origin-cell">{flight.origin || "—"}</td>
+                  <td data-label="Status"><span className={statusClass(flight.status)}>{flight.status}</span></td>
+                  <td data-label="Arrival">
                     <span className="arrival-time">
                       {flight.estimatedArrivalUtc
                         ? timeFormatter.format(new Date(flight.estimatedArrivalUtc))
@@ -166,7 +236,7 @@ export default function ArrivalsBoard() {
                       {arrivalCountdown(flight.estimatedArrivalUtc, now)}
                     </span>
                   </td>
-                  <td>{flight.routeDistanceMi ? `${flight.routeDistanceMi} mi` : "—"}</td>
+                  <td data-label="Distance" className="distance-cell">{flight.routeDistanceMi ? `${flight.routeDistanceMi} mi` : "—"}</td>
                 </tr>
               ))
             ) : (
